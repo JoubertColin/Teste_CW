@@ -1,0 +1,11 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Jogar SudoCruz</title><meta name="description" content="Sudoku 9x9 combinado com palavras cruzadas."><link rel="stylesheet" href="style.css"></head><body><header class="top"><div><a href="index.html">🧩 SudoCruz</a><nav><a href="index.html#jogar">Jogar</a><a href="recordes.html">Recordes</a><a href="privacidade.html">Privacidade</a><a href="contato.html">Contato</a></nav></div></header>
+<main><h1>SudoCruz</h1><p class="sub"><span id="lv"></span> · <b id="tm" class="tm">⏱ 00:00</b></p><div class="ad" data-slot="top">Espaço para anúncio</div><div class="key" id="key"></div>
+<p class="how">Cada letra da cruzada está ligada a uma casa do sudoku (canto: <b>L</b> = linha, <b>C</b> = coluna; casas ligadas têm um ponto âmbar). Acertou uma das duas? A outra é revelada em verde. Use a legenda para traduzir dígito em letra. Clique numa casa e digite.</p>
+<div class="boards">
+<section><h2>Sudoku 9×9 (use 1–9)</h2><div id="su" class="grid"></div></section>
+<section><h2>Palavras cruzadas</h2><div id="cw" class="grid"></div>
+<ul class="clues" id="cl"></ul></section>
+</div>
+<div class="bar"><button id="chk">Verificar erros</button><button id="rst">Reiniciar</button><span id="st"></span></div>
+<div id="win" hidden>🎉 Parabéns! Você resolveu os dois.<span id="wt"></span> <a id="nx" href="#">Próximo jogo →</a></div>
+<input id="in" autocomplete="off" autocapitalize="characters" aria-label="entrada"><div class="ad" data-slot="bottom">Espaço para anúncio</div></main><footer><a href="privacidade.html">Privacidade</a><a href="termos.html">Termos de uso</a><a href="contato.html">Contato</a><a href="#" onclick="return resetCons()">Preferências de cookies</a><p>© SudoCruz. Jogos de lógica e palavras.</p></footer><script src="puzzles.js"></script><script src="game.js"></script><script src="ads.js"></script></body></html>

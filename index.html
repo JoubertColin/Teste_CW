@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SudoCruz — Sudoku + Palavras Cruzadas</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f4ef;--card:#fff;--ink:#1e1d1a;--mut:#6b685f;--line:#cfcabd;--thick:#1e1d1a;--acc:#2f6fed;--amb:#e8a317;--ok:#1f8a4c;--bad:#d64545;--badbg:#f9dada;--given:#ece8dc;--blk:#2b2a27}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171613;--card:#23221e;--ink:#f1eee6;--mut:#a29e92;--line:#4a473f;--thick:#d9d5c8;--acc:#6b9bff;--amb:#f0b64a;--ok:#4cc582;--bad:#ff7b7b;--badbg:#4a2626;--given:#322f28;--blk:#0d0d0b}}
+:root[data-theme="dark"]{--bg:#171613;--card:#23221e;--ink:#f1eee6;--mut:#a29e92;--line:#4a473f;--thick:#d9d5c8;--acc:#6b9bff;--amb:#f0b64a;--ok:#4cc582;--bad:#ff7b7b;--badbg:#4a2626;--given:#322f28;--blk:#0d0d0b}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}
+main{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+h1{margin:0;font-size:1.8rem;letter-spacing:-.02em}
+h2{font-size:1rem;margin:0 0 8px;color:var(--mut);font-weight:600}
+.sub{margin:2px 0 14px;color:var(--mut)}
+.how{font-size:.9rem;color:var(--mut);margin:10px 0 18px}
+.key{display:flex;gap:6px;flex-wrap:wrap}
+.key span{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-weight:700}
+.boards{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.grid{display:grid;border:2px solid var(--thick);width:max-content}
+#su{--s:clamp(31px,9.6vw,46px)}#cw{--s:clamp(40px,11vw,54px)}
+.c{width:var(--s);height:var(--s);position:relative;display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.5);background:var(--card);border:1px solid var(--line);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.c.blk{background:var(--blk);cursor:default}
+.c.g{background:var(--given);font-weight:700}
+.c.a{color:var(--ok);font-weight:700}
+.c.bad{background:var(--badbg);color:var(--bad)}
+.c.sel{outline:3px solid var(--acc);outline-offset:-3px;z-index:1}
+.c.tl{border-left:2px solid var(--thick)}
+.c.tt{border-top:2px solid var(--thick)}
+.c.lnk::after{content:"";position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--amb)}
+.n{position:absolute;top:2px;left:3px;font-size:.6rem;color:var(--mut);font-weight:600}
+.lk{position:absolute;bottom:1px;right:3px;font-size:.55rem;color:var(--amb);font-weight:700}
+.clues{margin:12px 0 0;padding-left:0;list-style:none;font-size:.92rem;max-width:300px}
+.clues li{margin-bottom:4px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:22px}
+button{font:inherit;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+#st{color:var(--mut);font-size:.9rem}
+#win{margin-top:16px;padding:14px 16px;border-radius:10px;background:var(--given);border:2px solid var(--ok);font-weight:600}
+#in{position:fixed;left:-100px;top:0;width:10px;height:10px;opacity:0;font-size:16px}
+</style></head>
+<body><main>
+<h1>SudoCruz</h1>
+<p class="sub">Resolva o sudoku e as palavras cruzadas — um ajuda a resolver o outro.</p>
+<div class="key" id="key"></div>
+<p class="how">Cada letra da cruzada está ligada a uma casa do sudoku (canto: <b>L</b> = linha, <b>C</b> = coluna; casas ligadas têm um ponto âmbar). Acertou uma das duas? A outra é revelada em verde. Use a legenda para traduzir dígito em letra. Clique numa casa e digite.</p>
+<div class="boards">
+<section><h2>Sudoku 9×9 (use 1–9)</h2><div id="su" class="grid"></div></section>
+<section><h2>Palavras cruzadas</h2><div id="cw" class="grid"></div>
+<ul class="clues">
+<li><b>1 →</b> Retirar algo de algum lugar (5)</li>
+<li><b>4 →</b> Caminhos, trajetos (5)</li>
+<li><b>5 →</b> Partes do esqueleto (5)</li>
+<li><b>1 ↓</b> Conjunto de paletó e calça (5)</li>
+<li><b>2 ↓</b> Roedores (5)</li>
+<li><b>3 ↓</b> Gargalhadas leves (5)</li>
+</ul></section>
+</div>
+<div class="bar"><button id="chk">Verificar erros</button><button id="rst">Reiniciar</button><span id="st"></span></div>
+<div id="win" hidden>🎉 Parabéns! Sudoku e palavras cruzadas resolvidos.</div>
+<input id="in" autocomplete="off" autocapitalize="characters" aria-label="entrada">
+</main>
+<script>
+const SOL=[[6,7,2,1,8,5,9,3,4],[8,1,5,3,9,4,6,7,2],[9,3,4,7,6,2,8,1,5],[2,8,7,9,5,1,4,6,3],[5,9,1,6,4,3,2,8,7],[4,6,3,8,2,7,5,9,1],[7,5,8,4,1,9,3,2,6],[3,2,6,5,7,8,1,4,9],[1,4,9,2,3,6,7,5,8]];
+const KEY={'1': 'A', '2': 'E', '3': 'I', '4': 'L', '5': 'N', '6': 'O', '7': 'R', '8': 'S', '9': 'T'};
+const GIV=[[0,5],[0,6],[1,7],[2,0],[2,5],[2,8],[3,0],[3,2],[3,5],[4,0],[4,2],[4,4],[4,7],[5,1],[5,3],[6,5],[6,6],[7,1],[7,2],[7,3],[7,4],[7,7]];
+const WORDS=[{n:1,d:'h',r:0,c:0,w:'TIRAR'},{n:4,d:'h',r:2,c:0,w:'ROTAS'},{n:5,d:'h',r:4,c:0,w:'OSSOS'},{n:1,d:'v',r:0,c:0,w:'TERNO'},{n:2,d:'v',r:0,c:2,w:'RATOS'},{n:3,d:'v',r:0,c:4,w:'RISOS'}];
+const LK={'0,0':[8,2],'0,1':[2,1],'0,2':[4,8],'0,3':[6,4],'0,4':[2,3],'1,0':[8,3],'1,2':[1,1],'1,4':[5,2],'2,0':[6,0],'2,1':[2,4],'2,2':[1,4],'2,3':[5,8],'2,4':[3,1],'3,0':[5,6],'3,2':[1,6],'3,4':[6,8],'4,0':[8,5],'4,1':[1,0],'4,2':[6,2],'4,3':[0,0],'4,4':[7,5]};
+const NUM={'0,0':1,'0,2':2,'0,4':3,'2,0':4,'4,0':5};
+const GV=new Set(GIV.map(a=>a+''));
+let su,cwv,sel=null,showErr=false;
+const CW={},rev={};
+WORDS.forEach(w=>[...w.w].forEach((L,i)=>{const r=w.r+(w.d=='v'?i:0),c=w.c+(w.d=='h'?i:0);CW[r+','+c]={r,c,L}}));
+Object.entries(LK).forEach(([k,v])=>{CW[k].sr=v[0];CW[k].sc=v[1];rev[v+'']=CW[k]});
+const $=s=>document.querySelector(s);
+function reset(){su=SOL.map(r=>r.map(()=>0));GIV.forEach(([r,c])=>su[r][c]=SOL[r][c]);cwv={};sel=null;showErr=false;render()}
+function sv(r,c){if(GV.has(r+','+c))return{v:SOL[r][c],t:'g'};const o=rev[r+','+c];if(o&&cwv[o.r+','+o.c]===o.L)return{v:SOL[r][c],t:'a'};return{v:su[r][c],t:''}}
+function cv(o){if(su[o.sr][o.sc]===SOL[o.sr][o.sc])return{v:o.L,t:'a'};return{v:cwv[o.r+','+o.c]||'',t:''}}
+// build
+$('#key').innerHTML=Object.entries(KEY).map(([d,l])=>`<span>${d} = ${l}</span>`).join('');
+const gs=$('#su'),gc=$('#cw');
+gs.style.gridTemplateColumns='repeat(9,var(--s))';gc.style.gridTemplateColumns='repeat(5,var(--s))';
+const sCells={},cCells={};
+for(let r=0;r<9;r++)for(let c=0;c<9;c++){const d=document.createElement('div');d.className='c'+(c%3==0&&c?' tl':'')+(r%3==0&&r?' tt':'')+(rev[r+','+c]?' lnk':'');d.onclick=()=>pick('s',r,c);gs.appendChild(d);sCells[r+','+c]=d}
+for(let r=0;r<5;r++)for(let c=0;c<5;c++){const k=r+','+c,d=document.createElement('div');if(CW[k]){d.className='c';d.onclick=()=>pick('c',r,c)}else d.className='c blk';gc.appendChild(d);cCells[k]=d}
+function pick(g,r,c){sel={g,r,c};render();const i=$('#in');i.value='';i.focus({preventScroll:true})}
+function render(){
+ let sOk=0,cOk=0;
+ for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+  const k=r+','+c,x=sv(r,c),d=sCells[k];
+  if(x.v===SOL[r][c])sOk++;
+  const bad=showErr&&x.t===''&&x.v&&x.v!==SOL[r][c];
+  d.className=d.className.replace(/ ?(g|a|bad|sel)\b/g,'')+(x.t?' '+x.t:'')+(bad?' bad':'')+(sel&&sel.g=='s'&&sel.r==r&&sel.c==c?' sel':'');
+  d.textContent=x.v||'';
+  const o=rev[k];if(o&&!x.v){}
+ }
+ for(const k in CW){
+  const o=CW[k],x=cv(o),d=cCells[k];
+  if(x.v===o.L)cOk++;
+  const bad=showErr&&x.t===''&&x.v&&x.v!==o.L;
+  d.className='c'+(x.t?' '+x.t:'')+(bad?' bad':'')+(sel&&sel.g=='c'&&sel.r==o.r&&sel.c==o.c?' sel':'');
+  d.innerHTML=(NUM[k]?`<span class="n">${NUM[k]}</span>`:'')+x.v+`<span class="lk">L${o.sr+1}C${o.sc+1}</span>`;
+ }
+ $('#st').textContent=`Sudoku ${sOk}/81 · Cruzada ${cOk}/21`;
+ $('#win').hidden=!(sOk==81&&cOk==21);
+}
+function locked(){if(!sel)return true;if(sel.g=='s')return sv(sel.r,sel.c).t!=='';return cv(CW[sel.r+','+sel.c]).t!==''}
+function put(ch){
+ if(!sel||locked())return;ch=ch.toUpperCase();showErr=false;
+ if(sel.g=='s'){if(/^[1-9]$/.test(ch))su[sel.r][sel.c]=+ch}
+ else if(/^[A-Z]$/.test(ch))cwv[sel.r+','+sel.c]=ch;
+ render();
+}
+function clear(){if(!sel||locked())return;if(sel.g=='s')su[sel.r][sel.c]=0;else delete cwv[sel.r+','+sel.c];render()}
+function move(dr,dc){
+ if(!sel)return;const n=sel.g=='s'?9:5;let r=sel.r+dr,c=sel.c+dc;
+ while(r>=0&&c>=0&&r<n&&c<n){if(sel.g=='s'||CW[r+','+c]){sel={g:sel.g,r,c};render();return}r+=dr;c+=dc}
+}
+const inp=$('#in');
+inp.addEventListener('input',()=>{const ch=inp.value.slice(-1);inp.value='';if(ch)put(ch)});
+inp.addEventListener('keydown',e=>{
+ const m={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];
+ if(m){e.preventDefault();move(...m)}else if(e.key=='Backspace'||e.key=='Delete'){e.preventDefault();clear()}
+});
+$('#chk').onclick=()=>{showErr=!showErr;render()};
+$('#rst').onclick=reset;
+reset();
+</script></body></html>
